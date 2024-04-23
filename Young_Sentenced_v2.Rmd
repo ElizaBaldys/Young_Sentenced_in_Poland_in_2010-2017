@@ -1,0 +1,211 @@
+---
+title: "Analysis of data on juveniles sentenced in Poland in the years 2010 - 2017"
+author: "Eliza Baldys"
+date: "30.01.2020"
+output: pdf_document
+highlight: tango
+theme: cerulean
+df_print: paged
+
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+
+```
+
+```{r}
+MP <- Skazani
+
+MP
+
+```
+
+** It is customary to consider men to be more aggressive. It is in their company that we feel threatened more often. If we add to this a young age and a rather non-standard appearance or alcohol, we can feel anxious.  It is also not difficult to notice that teenage girls are more likely to be vulgar, aggressive, loud and firm in expressing opinions than their peers of the opposite sex. However, this does not affect our trust in women. We are going to check if it is true that men more likely breake the low. All analysis are based on data form official police webside about young sentenced people in Poland in 2010 - 2017.
+ **
+
+```{r}
+MP %>% 
+  group_by(Gender) %>% 
+  summarise(Number_of_Sentenced = sum(Sentenced))
+
+```
+
+
+** We can see that the difference is very large. Significantly more young men were convicted of crimes in the years analyzed. Let's see how the number of sentences was distributed over the years. **
+
+```{r}
+MP_r <- MP %>% 
+  group_by(Year) %>% 
+  summarise(Number_of_Sentenced_Year = sum(Sentenced))
+MP_r
+
+```
+
+```{r}
+MP_r %>% 
+  arrange(desc(Number_of_Sentenced_Year)) %>% 
+head(2) 
+
+```
+
+We can see that the highest number of people were convicted in 2010 and 2011. Now let's see on the chart what the number of judgments looks like depending on the year.
+
+```{r}
+ggplot(MP_r, aes(x = Year , y = Number_of_Sentenced_Year)) +
+  geom_line(linewidth = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "firebrick2") +
+  ggtitle(" Amount of sentenced young people in years 2010 - 2017") +
+  xlab("") +
+  ylab(" Year ") +
+  scale_y_continuous(breaks = seq (0, 90000, by = 10000), 
+                     labels = paste(seq(0, 90000, by = 10000)/1000, "k")) +
+  scale_x_continuous(breaks = seq (2010, 2017, by = 1))+
+  theme_minimal()
+
+```
+
+** The chart above can be optimistic, assuming, of course, that the effectiveness of the police is not decreasing. The graph clearly shows that the number of young people breaking the law is getting lower every year. Between 2013 and 2015, this number was lower than forecast.  
+Unfortunately, in the following years, the number of young people who have heard the court's verdict exceeds our products. Thus, the decline was not as large as one might expect. Nevertheless, it is encouraging to see that this number is decreasing.
+Let's go back to the analysis by gender and age **
+
+```{r}
+MP_w <- MP %>% 
+  group_by(Age, Gender) %>% 
+  summarise(Number_of_Sentenced_Age = sum(Sentenced))
+MP_w
+
+```
+
+
+```{r}
+MP_w %>% 
+ggplot(aes(x = Age, y = Number_of_Sentenced_Age, fill = Gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  ggtitle("Quantity of sentenced by their age") +
+  xlab("Age") +
+  ylab("") +
+   scale_y_continuous(breaks = seq (0, 100000, by = 10000), 
+                     labels = paste(seq(0, 100000, by = 10000)/1000, "k")) +
+  scale_fill_manual(values=c("plum1", "lightblue"))+
+  theme_minimal()
+  
+```
+
+** The graph shows a huge difference between the number of convictions of women and men. We can now conclude that there is some basis for greater trust in women. The difference shown in the chart is surprising. It is much more common for young boys to break the law. 
+Before we go into the gender analysis, let's see how many young people have been convicted in these 7 years. **
+
+
+```{r}
+MP_v <- MP %>% 
+  summarise(Value = sum(Sentenced))
+MP_v
+
+```
+
+
+** Another question you can ask yourself is: 
+"At what age are young people most likely to go against the low?"
+Let's start with women. 
+Taking into account age, we recorded the following number of convictions.**
+
+
+```{r}
+MP_w %>% 
+  filter(Gender == "Female") %>% 
+  summarise(value_f = sum(Number_of_Sentenced_Age))
+
+```
+
+
+** It is clear from the table that the number of convicts increases with age. **
+
+```{r}
+V_female <- MP_w %>% 
+  filter(Gender == "Female") %>% 
+  summarise(VFS = sum(Number_of_Sentenced_Age)) %>% 
+  summarise(VF = sum(VFS))
+V_female
+
+```
+
+**
+In total, 33.894 women were convicted between 2010 and 2017. Taking into account the number of all crimes calculated above, we can see that women are not inclined to break the law compared to men.
+
+To determine the age at which women most often heard a court decision, we will use percentages.**
+
+```{r}
+MP_pr <- MP_w %>% 
+  filter(Gender == "Female") %>% 
+  mutate(Percent_F = round((Number_of_Sentenced_Age * 100)/ as.numeric(V_female),2 ) )
+MP_pr
+
+```
+
+** Let's illustrate the data with a graph. **
+
+```{r}
+ggplot(MP_pr, aes(x = Age, y = Percent_F)) +
+  geom_point(size = 3, shape = 18, color = "orchid2") +
+  ggtitle("Percentage of female crimes by age.") +
+  xlab("Age") +
+  ylab(" Percent ") +
+  scale_y_continuous(limits = c(0, 25)) +
+  theme_minimal()
+
+```
+
+** 
+We can observe an upward trend. Women at the age of 21 were much more likely to be convicted than women at the age of 17 or 18. Intuition might dictate that the result should be the opposite. After all, it seems that with age comes the awareness of the consequences of ours actions. However, we should remember that we are based on data that does not take into account differences in the law. With age comes greater responsibility.Thus, a younger person may be treated more leniently by the court. Now, let's carry out the same procedure for men
+ **
+
+```{r}
+MP_w <- MP %>% 
+  group_by(Age, Gender) %>% 
+  summarise(Number_of_Sentenced_Age = sum(Sentenced))
+MP_w
+
+```
+
+
+```{r}
+V_male <- MP_w %>% 
+  filter(Gender == "Male") %>% 
+  summarise(VMA = sum(Number_of_Sentenced_Age)) %>% 
+  summarise(VM = sum(VMA))
+V_male
+  
+```
+
+** Here the number is much higher. The quantity of sentenced men is around 12 times higher than amount of sentenced women.**
+
+
+
+```{r}
+MP_pr <- MP_w %>% 
+  filter(Gender == "Male") %>% 
+  mutate(Percent_M = round((Number_of_Sentenced_Age * 100)/ as.numeric(V_male), 2 ) )
+MP_pr
+
+```
+** In this case we can observe as well that 17 years old boys are not as often into crime. Again, the reason can be in the rules special for underage people. For a full analysis we would need more of context.
+Let us see plot based on discussed table. **
+
+```{r}
+ggplot(MP_pr, aes(x = Age, y = Percent_M)) +
+  geom_point(size = 3, shape = 17, color = "turquoise3") +
+  ggtitle("Percentage of male crimes by age.") +
+  xlab("Age") +
+  ylab(" Percent ") +
+  scale_y_continuous(limits = c(0, 25)) +
+  theme_minimal()
+
+```
+** In this case, too, the number of convicts aged 17 and 18 is the lowest. The highest number of sentences was recorded for 19-year-olds. Anyway, the differences here are lower than in case of women. 
+
+Definitely we can deduce that men are more likely to commit crimes. Another important thing that we have observed is that the amount of sentences in Poland for young people is decreasing in time. We can agree that it looks optimistically. It is important to remember that it is a simple analysis that is not including context behind the numbers. **
+
+
